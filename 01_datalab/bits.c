@@ -2,7 +2,7 @@
  * CS:APP Data Lab 
  * 
  * <Please put your name and userid here>
- * 
+ * 김남윤 2020030819
  * bits.c - Source file with your solutions to the Lab.
  *          This is the file you will hand in to your instructor.
  *
@@ -143,18 +143,19 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+  return ~(~(x & ~ y) & (~(~x&y)));
 }
 /* 
  * tmin - return minimum two's complement integer 
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
+ * tmin : 100...000
  */
 int tmin(void) {
-
-  return 2;
-
+  int min = 0x01;
+  min <<= 31;
+  return min;
 }
 //2
 /*
@@ -163,9 +164,13 @@ int tmin(void) {
  *   Legal ops: ! ~ & ^ | +
  *   Max ops: 10
  *   Rating: 1
+ *  tmax : 01111111111
+ *  shift 못 씀
  */
 int isTmax(int x) {
-  return 2;
+  // Tmax는 0111111111.11111 
+  int test = 0x7fffffff; // tmax 값
+  return !(test^x); // 011111111.. 비교 >> Tmax
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -174,9 +179,14 @@ int isTmax(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 12
  *   Rating: 2
+ * test : 1010 .... 1010
+ * x와 test의 xor 이후 0000, 0001, 0101, 0100 등의 형태만 남고, 이를 다시 test와 &연산을 진행했을 때
+ * >> 0이 나오면 모든 Oddbit가 1임
  */
 int allOddBits(int x) {
-  return 2;
+  int test = 0xAAAAAAAA;
+  
+  return !((test^x) & test);
 }
 /* 
  * negate - return -x 
@@ -186,7 +196,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return (~x + 1);
 }
 //3
 /* 
@@ -197,9 +207,12 @@ int negate(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 15
  *   Rating: 3
+ *  0x30 == 0b 0011 0000
+ *  0x39 == 0b 0011 1001
  */
 int isAsciiDigit(int x) {
-  return 2;
+  // first, >> 4번 진행한 값이 0011인지 확인
+  
 }
 /* 
  * conditional - same as x ? y : z 
@@ -207,9 +220,14 @@ int isAsciiDigit(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 16
  *   Rating: 3
+ * x가 0이 아닌 숫자 일 때 전부 111111..11111
+ * test = 0 인 경우 ~test + 1 : >>> 00000 (overflow)
+ * test = 1인 경우 : ~test + 1: >>> 1111...
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  int test = !!x ; // x 를 0이나 1으로 바꿈
+  
+  return ((~test + 1) & y) | ~(~test + 1) & z; 
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,6 +237,7 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
+
   return 2;
 }
 //4
@@ -231,7 +250,8 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+
+  return (x&0xffffffff);
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,6 +266,7 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
+  
   return 0;
 }
 //float
