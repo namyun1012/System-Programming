@@ -207,12 +207,18 @@ int negate(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 15
  *   Rating: 3
- *  0x30 == 0b 0011 0000
- *  0x39 == 0b 0011 1001
+ *  0x30 == 0001 1110
+ *  0x39 == 0010 0111
+ *  0x30과 0x3a 의 minus 값을 정해 놓고 x 더해서 음수 나오나 안나오나로 검사
+ *  
  */
 int isAsciiDigit(int x) {
-  // first, >> 4번 진행한 값이 0011인지 확인
   
+  int lowertest = (~0x30 + 1) + x;
+  int uppertest = (~0x3a + 1) + x;
+
+  // lower가 양수, upper 가 음수 일 때 return 1
+  return (!(lowertest >> 31)) & (uppertest >> 31);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -227,7 +233,7 @@ int isAsciiDigit(int x) {
 int conditional(int x, int y, int z) {
   int test = !!x ; // x 를 0이나 1으로 바꿈
   
-  return ((~test + 1) & y) | ~(~test + 1) & z; 
+  return ((~test + 1) & y) | (~(~test + 1) & z); 
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -235,10 +241,19 @@ int conditional(int x, int y, int z) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 24
  *   Rating: 3
+ * y - x 값 작업 실행후 그 결과 보고 진행
+ * // test가 양수 일 경우,  return 1 else, return 0 >> tmax, tmin의 문제
+ * x가 음수, y가 양수가 되면 무조건 통과하게 설정 >> test2
+ * x가 양수. y가 음수가 되면 무조건 불통과
+ * 
  */
 int isLessOrEqual(int x, int y) {
-
-  return 2;
+  
+  int test = y + (~x + 1);
+  int test2 = ((x>>31) & !(y>>31)); // x는 음수 y는 양수
+  int test3 = ((y>>31) & !(x>>31)); // x는 양수, y는 음수
+  
+  return ((test2 | (!(test>>31))) & !test3);
 }
 //4
 /* 
@@ -251,7 +266,7 @@ int isLessOrEqual(int x, int y) {
  */
 int logicalNeg(int x) {
 
-  return (x&0xffffffff);
+  return 2;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
