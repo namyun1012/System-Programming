@@ -263,10 +263,18 @@ int isLessOrEqual(int x, int y) {
  *   Legal ops: ~ & ^ | + << >>
  *   Max ops: 12
  *   Rating: 4 
+ *  0은 1 나머지는 전부 0
+ *   
  */
 int logicalNeg(int x) {
-
-  return 2;
+  int test = x>>31; // 음수 거르기, 음수면 0xff.ffff, 양수인 경우, 0일 경우에는 0
+  int test2 = ((~x + 1) >> 31);  // - x가 음수인지 확인해서 거름 양수면 0xffff...ffff, 음수거나  0이면 0
+  int test3 = test | test2; // 
+  // 0이 아닌 경우 test | test2 >> 0xffffffff >> 1을 더해주면 0
+  // 0인 경우 test | test2 >> 0 >> 1 더해주면 1
+  // XOR 0x01로 처리
+  // right shift 할 때 부호 유지됨
+  return (test3 + 1);
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -295,9 +303,52 @@ int howManyBits(int x) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 30
  *   Rating: 4
+ *   // 
+ *   1 - 8 - 23
+ *   주어진 uf에다가 곱하기 2를 진행함
+ *  exponent 값을 1 올리자
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  // NaN인지 검사 exp = 11111.1111 일 때 , frac != 000.00000
+  int i = 0;
+  unsigned test = uf << 1;
+  while(i < 8) {
+    if(!!(test & 0x80000000U)) { // 1인 경우
+      i++;
+      test <<= 1;
+      continue;
+    }
+    break;
+  }
+  // while에서 안 걸렸으면 exp =1111.11....111
+  
+  
+  if(i == 8) return uf; // exp 1111 >> return uf
+
+  // 뽑기
+  unsigned sign = uf & 0x80000000U; // 1000.000........0
+  unsigned signif = (uf << 9); // significand가 0인지 체크 필요
+  unsigned exp = (uf >> 23) & 0x000000ffU; // exp만 살리고 다 죽임 (밑으로 내림)
+  
+  if(!signif && !exp) // significand와 exp가 둘다 0인 경우
+    return uf;
+  else if(!exp)  {// exp가 0인 경우, 매우 작은 수 일 때 
+    return (sign | (uf << 1)); // uf에 2를 곱한 값(left shift) + sign 유지
+  }
+  // 그냥 보통의 경우
+  else {
+    exp += 1;
+    return (uf & 0x807fffffU) | (exp << 23);
+  }
+
+
+  /*
+  if(signif | exp) exp += 1; // 곱해주는 것이므로 exp에 1을 더해줌 (0인 경우에는 더하지 않음)
+  exp <<= 23; // 다시 제자리로 돌림
+  unsigned test2 = uf & 0x80001fffU; // sign , significand만 살림
+  */
+
+
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
