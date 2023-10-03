@@ -293,6 +293,7 @@ int logicalNeg(int x) {
 int howManyBits(int x) {
   int sign = x >> 31; // 11111 or 0000000
   int result = 0; // 우선 0
+  int test = 0;
 
   // MSB 찾기, 양수는 1, 음수는 0
   // 그러므로 양수 일 때는 오른쪽 유지 음수 일 때는 왼쪽 유지 + ~를 해서 1을 찾는 것으로 바꿈
@@ -301,8 +302,9 @@ int howManyBits(int x) {
 
 
   // 4개의 bit마다 연산 1이 존재하면 4씩 늘어남 (7번)을 진행하고
-  // 마지막 끝 부분은 하나씩 따로 연산해 준다.
-  result += (!!(x >> 4)) << 2; // 4개 right shift 했을 때 0 아님
+  // 마지막 끝 부분은 하나씩 따로 연산하도록 함
+  // result : 0 ~ 28 (4개 단위로)
+  result += (!!(x >> 4)) << 2; // 4개 right shift 했을 때 0 아닐 때 4를 더해줌 1 << 2 == 4
   result += (!!(x >> 8)) << 2;  //......
   result += (!!(x >> 12)) << 2;
   result += (!!(x >> 16)) << 2;
@@ -312,7 +314,9 @@ int howManyBits(int x) {
   // 추가로 4번 반복
 
   // 4개 단위로 끊어온 부분 까지 더한 후 마지막 부분 1개씩 연산해줌
-  int test = x >> result;
+  
+  test = x >> result;
+
   result += (!!test); 
   test >>= 1;
   result += (!!test);
@@ -345,6 +349,9 @@ unsigned floatScale2(unsigned uf) {
   // NaN인지 검사 exp = 11111.1111 일 때 , frac != 000.00000
   int i = 0;
   unsigned test = uf << 1;
+  int sign;
+  int signif;
+  int exp;
   while(i < 8) {
     if(!!(test & 0x80000000U)) { // 1인 경우
       i++;
@@ -359,9 +366,9 @@ unsigned floatScale2(unsigned uf) {
   if(i == 8) return uf; // exp 1111 >> return uf
 
   // 뽑기
-  int sign = uf & 0x80000000U; // 1000.000........0
-  int signif = (uf << 9); // significand가 0인지 체크 필요
-  int exp = (uf >> 23) & 0x000000ffU; // exp만 살리고 다 죽임 (밑으로 내림)
+  sign = uf & 0x80000000U; // 1000.000........0
+  signif = (uf << 9); // significand가 0인지 체크 필요
+  exp = (uf >> 23) & 0x000000ffU; // exp만 살리고 다 죽임 (밑으로 내림)
   
   if(!signif && !exp) // significand와 exp가 둘다 0인 경우
     return uf;
@@ -389,16 +396,22 @@ unsigned floatScale2(unsigned uf) {
  */
 int floatFloat2Int(unsigned uf) {
   unsigned test = uf << 1;
+  unsigned sign;
+  unsigned exp;
+  unsigned significand;
+  unsigned result;
+  unsigned bias;
+
   test ^= 0xff000000U;
   if(!test) return 0x80000000u; // Nan,Infitie Test
 
-  unsigned sign = uf >> 31; // 0 양수, 1 음수
+  sign = uf >> 31; // 0 양수, 1 음수
   // 우선 양수로 구한다음 부호 바꾸기
-  unsigned exp = (uf >> 23) & 0xff;
-  unsigned significand = uf & (0x007fffff);
+  exp = (uf >> 23) & 0xff;
+  significand = uf & (0x007fffff);
 
-  unsigned result = 0;
-  unsigned bias = 127U;
+  result = 0;
+  bias = 127U;
   
 
   if(exp < bias) return 0; // exp < bias일 경우 return  0
@@ -434,13 +447,13 @@ unsigned floatPower2(int x) {
   unsigned signifcand = 0; // 23
   int bias = 127;
   unsigned result = 0;
-
+  unsigned exp;
   if(x < 0) return 0;
   if(x >= (255 - bias)) return 0x7f800000U; // x + bias가 255(11111111) 되면 return
 
   x += bias;
 
-  unsigned exp = (x << 23) & 0x7f800000U;
+  exp = (x << 23) & 0x7f800000U;
   
   result = exp | signifcand;
 
