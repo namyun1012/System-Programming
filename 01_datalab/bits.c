@@ -1,6 +1,6 @@
-/* 
- * CS:APP Data Lab 
- * 
+/*
+ * CS:APP Data Lab
+ *
  * <Please put your name and userid here>
  * 김남윤 2020030819
  * bits.c - Source file with your solutions to the Lab.
@@ -10,7 +10,8 @@
  * compiler. You can still use printf for debugging without including
  * <stdio.h>, although you might get a compiler warning. In general,
  * it's not good practice to ignore compiler warnings, but in this
- * case it's OK.  
+ * case it's OK.
+ * Complete?
  */
 
 #if 0
@@ -132,35 +133,36 @@ NOTES:
  *      the correct answers.
  */
 
-
 #endif
-//1
-/* 
- * bitXor - x^y using only ~ and & 
+// 1
+/*
+ * bitXor - x^y using only ~ and &
  *   Example: bitXor(4, 5) = 1
  *   Legal ops: ~ &
  *   Max ops: 14
  *   Rating: 1
  */
-int bitXor(int x, int y) {
-  return ~(~(x & ~ y) & (~(~x&y)));
+int bitXor(int x, int y)
+{
+  return ~(~(x & ~y) & (~(~x & y)));
 }
-/* 
- * tmin - return minimum two's complement integer 
+/*
+ * tmin - return minimum two's complement integer
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
  * tmin : 100...000
  */
-int tmin(void) {
+int tmin(void)
+{
   int min = 0x01;
   min <<= 31;
   return min;
 }
-//2
+// 2
 /*
  * isTmax - returns 1 if x is the maximum, two's complement number,
- *     and 0 otherwise 
+ *     and 0 otherwise
  *   Legal ops: ! ~ & ^ | +
  *   Max ops: 10
  *   Rating: 1
@@ -168,13 +170,14 @@ int tmin(void) {
  *  shift 못 씀
  *  0xff 까지만
  */
-int isTmax(int x) {
-  // Tmax는 0111111111.11111 
+int isTmax(int x)
+{
+  // Tmax는 0111111111.11111
   int test = x + 1; // Tmax는 x + 1 과 ~x가 같다. -1 인 경우 고려
 
-  return !(test^(~x)) & !!(test^0); 
+  return !(test ^ (~x)) & !!(test ^ 0);
 }
-/* 
+/*
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
  *   where bits are numbered from 0 (least significant) to 31 (most significant)
  *   Examples allOddBits(0xFFFFFFFD) = 0, allOddBits(0xAAAAAAAA) = 1
@@ -185,23 +188,25 @@ int isTmax(int x) {
  * x와 test의 xor 이후 0000, 0001, 0101, 0100 등의 형태만 남고, 이를 다시 test와 &연산을 진행했을 때
  * >> 0이 나오면 모든 Oddbit가 1임
  */
-int allOddBits(int x) {
+int allOddBits(int x)
+{
   int test = 0xAA + (0xAA << 8) + (0xAA << 16) + (0xAA << 24);
-  
-  return !((test^x) & test);
+
+  return !((test ^ x) & test);
 }
-/* 
- * negate - return -x 
+/*
+ * negate - return -x
  *   Example: negate(1) = -1.
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 5
  *   Rating: 2
  */
-int negate(int x) {
+int negate(int x)
+{
   return (~x + 1);
 }
-//3
-/* 
+// 3
+/*
  * isAsciiDigit - return 1 if 0x30 <= x <= 0x39 (ASCII codes for characters '0' to '9')
  *   Example: isAsciiDigit(0x35) = 1.
  *            isAsciiDigit(0x3a) = 0.
@@ -212,18 +217,19 @@ int negate(int x) {
  *  0x30 == 0001 1110
  *  0x39 == 0010 0111
  *  0x30과 0x3a 의 minus 값을 정해 놓고 x 더해서 음수 나오나 안나오나로 검사
- *  
+ *
  */
-int isAsciiDigit(int x) {
-  
+int isAsciiDigit(int x)
+{
+
   int lowertest = (~0x30 + 1) + x;
   int uppertest = (~0x3a + 1) + x;
 
   // lower가 양수, upper 가 음수 일 때 return 1
   return (!(lowertest >> 31)) & (uppertest >> 31);
 }
-/* 
- * conditional - same as x ? y : z 
+/*
+ * conditional - same as x ? y : z
  *   Example: conditional(2,4,5) = 4
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 16
@@ -232,13 +238,14 @@ int isAsciiDigit(int x) {
  * test = 0 인 경우 ~test + 1 : >>> 00000 (overflow)
  * test = 1인 경우 : ~test + 1: >>> 1111...
  */
-int conditional(int x, int y, int z) {
-  int test = !!x ; // x 를 0이나 1으로 바꿈
-  
-  return ((~test + 1) & y) | (~(~test + 1) & z); 
+int conditional(int x, int y, int z)
+{
+  int test = !!x; // x 를 0이나 1으로 바꿈
+
+  return ((~test + 1) & y) | (~(~test + 1) & z);
 }
-/* 
- * isLessOrEqual - if x <= y  then return 1, else return 0 
+/*
+ * isLessOrEqual - if x <= y  then return 1, else return 0
  *   Example: isLessOrEqual(4,5) = 1.
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 24
@@ -247,31 +254,33 @@ int conditional(int x, int y, int z) {
  * // test가 양수 일 경우,  return 1 else, return 0 >> tmax, tmin의 문제
  * x가 음수, y가 양수가 되면 무조건 통과하게 설정 >> test2
  * x가 양수. y가 음수가 되면 무조건 불통과
- * 
+ *
  */
-int isLessOrEqual(int x, int y) {
-  
+int isLessOrEqual(int x, int y)
+{
+
   int test = y + (~x + 1);
-  int test2 = ((x>>31) & !(y>>31)); // x는 음수 y는 양수
-  int test3 = ((y>>31) & !(x>>31)); // x는 양수, y는 음수
-  
-  return ((test2 | (!(test>>31))) & !test3);
+  int test2 = ((x >> 31) & !(y >> 31)); // x는 음수 y는 양수
+  int test3 = ((y >> 31) & !(x >> 31)); // x는 양수, y는 음수
+
+  return ((test2 | (!(test >> 31))) & !test3);
 }
-//4
-/* 
- * logicalNeg - implement the ! operator, using all of 
+// 4
+/*
+ * logicalNeg - implement the ! operator, using all of
  *              the legal operators except !
  *   Examples: logicalNeg(3) = 0, logicalNeg(0) = 1
  *   Legal ops: ~ & ^ | + << >>
  *   Max ops: 12
- *   Rating: 4 
+ *   Rating: 4
  *  0은 1 나머지는 전부 0
- *   
+ *
  */
-int logicalNeg(int x) {
-  int test = x>>31; // 음수 거르기, 음수면 0xff.ffff, 양수인 경우, 0일 경우에는 0
-  int test2 = ((~x + 1) >> 31);  // - x가 음수인지 확인해서 거름 양수면 0xffff...ffff, 음수거나  0이면 0
-  int test3 = test | test2; // 
+int logicalNeg(int x)
+{
+  int test = x >> 31;           // 음수 거르기, 음수면 0xff.ffff, 양수인 경우, 0일 경우에는 0
+  int test2 = ((~x + 1) >> 31); // - x가 음수인지 확인해서 거름 양수면 0xffff...ffff, 음수거나  0이면 0
+  int test3 = test | test2;     //
   // 0이 아닌 경우 test | test2 >> 0xffffffff >> 1을 더해주면 0
   // 0인 경우 test | test2 >> 0 >> 1 더해주면 1
   // XOR 0x01로 처리
@@ -281,8 +290,8 @@ int logicalNeg(int x) {
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
  *  Examples: howManyBits(12) = 5 >> 11000
- *            howManyBits(298) = 10 >> 
- *            howManyBits(-5) = 4 
+ *            howManyBits(298) = 10 >>
+ *            howManyBits(-5) = 4
  *            howManyBits(0)  = 1
  *            howManyBits(-1) = 1
  *            howManyBits(0x80000000) = 32
@@ -290,22 +299,21 @@ int logicalNeg(int x) {
  *  Max ops: 90
  *  Rating: 4
  */
-int howManyBits(int x) {
+int howManyBits(int x)
+{
   int sign = x >> 31; // 11111 or 0000000
-  int result = 0; // 우선 0
+  int result = 0;     // 우선 0
   int test = 0;
 
   // MSB 찾기, 양수는 1, 음수는 0
   // 그러므로 양수 일 때는 오른쪽 유지 음수 일 때는 왼쪽 유지 + ~를 해서 1을 찾는 것으로 바꿈
-  x = (sign & ~x) | (~sign & x); 
-
-
+  x = (sign & ~x) | (~sign & x);
 
   // 4개의 bit마다 연산 1이 존재하면 4씩 늘어남 (7번)을 진행하고
   // 마지막 끝 부분은 하나씩 따로 연산하도록 함
   // result : 0 ~ 28 (4개 단위로)
   result += (!!(x >> 4)) << 2; // 4개 right shift 했을 때 0 아닐 때 4를 더해줌 1 << 2 == 4
-  result += (!!(x >> 8)) << 2;  //......
+  result += (!!(x >> 8)) << 2; //......
   result += (!!(x >> 12)) << 2;
   result += (!!(x >> 16)) << 2;
   result += (!!(x >> 20)) << 2;
@@ -314,10 +322,10 @@ int howManyBits(int x) {
   // 추가로 4번 반복
 
   // 4개 단위로 끊어온 부분 까지 더한 후 마지막 부분 1개씩 연산해줌
-  
+
   test = x >> result;
 
-  result += (!!test); 
+  result += (!!test);
   test >>= 1;
   result += (!!test);
   test >>= 1;
@@ -329,8 +337,8 @@ int howManyBits(int x) {
   result += 1;
   return result;
 }
-//float
-/* 
+// float
+/*
  * floatScale2 - Return bit-level equivalent of expression 2*f for
  *   floating point argument f.
  *   Both the argument and result are passed as unsigned int's, but
@@ -340,20 +348,23 @@ int howManyBits(int x) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 30
  *   Rating: 4
- *   // 
+ *   //
  *   1 - 8 - 23
  *   주어진 uf에다가 곱하기 2를 진행함
  *  exponent 값을 1 올리자
  */
-unsigned floatScale2(unsigned uf) {
+unsigned floatScale2(unsigned uf)
+{
   // NaN인지 검사 exp = 11111.1111 일 때 , frac != 000.00000
   int i = 0;
   unsigned test = uf << 1;
   int sign;
   int signif;
   int exp;
-  while(i < 8) {
-    if(!!(test & 0x80000000U)) { // 1인 경우
+  while (i < 8)
+  {
+    if (!!(test & 0x80000000U))
+    { // 1인 경우
       i++;
       test <<= 1;
       continue;
@@ -361,27 +372,29 @@ unsigned floatScale2(unsigned uf) {
     break;
   }
   // while에서 안 걸렸으면 exp =1111.11....111
-  
-  
-  if(i == 8) return uf; // exp 1111 >> return uf
+
+  if (i == 8)
+    return uf; // exp 1111 >> return uf
 
   // 뽑기
-  sign = uf & 0x80000000U; // 1000.000........0
-  signif = (uf << 9); // significand가 0인지 체크 필요
+  sign = uf & 0x80000000U;        // 1000.000........0
+  signif = (uf << 9);             // significand가 0인지 체크 필요
   exp = (uf >> 23) & 0x000000ffU; // exp만 살리고 다 죽임 (밑으로 내림)
-  
-  if(!signif && !exp) // significand와 exp가 둘다 0인 경우
+
+  if (!signif && !exp) // significand와 exp가 둘다 0인 경우
     return uf;
-  else if(!exp)  {// exp가 0인 경우, 매우 작은 수 일 때 
+  else if (!exp)
+  {                            // exp가 0인 경우, 매우 작은 수 일 때
     return (sign | (uf << 1)); // uf에 2를 곱한 값(left shift) + sign 유지
   }
   // 그냥 보통의 경우
-  else {
+  else
+  {
     exp += 1;
     return (uf & 0x807fffffU) | (exp << 23);
   }
 }
-/* 
+/*
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
  *   for floating point argument f.
  *   Argument is passed as unsigned int, but
@@ -394,7 +407,8 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  *   bias = 127 (float)
  */
-int floatFloat2Int(unsigned uf) {
+int floatFloat2Int(unsigned uf)
+{
   unsigned test = uf << 1;
   unsigned sign;
   unsigned exp;
@@ -403,7 +417,8 @@ int floatFloat2Int(unsigned uf) {
   unsigned bias;
 
   test ^= 0xff000000U;
-  if(!test) return 0x80000000u; // Nan,Infitie Test
+  if (!test)
+    return 0x80000000u; // Nan,Infitie Test
 
   sign = uf >> 31; // 0 양수, 1 음수
   // 우선 양수로 구한다음 부호 바꾸기
@@ -412,24 +427,27 @@ int floatFloat2Int(unsigned uf) {
 
   result = 0;
   bias = 127U;
-  
 
-  if(exp < bias) return 0; // exp < bias일 경우 return  0
-  
-  if(exp > bias + 30U) return 0x80000000u; // 2^31 >> overflow 발생
+  if (exp < bias)
+    return 0; // exp < bias일 경우 return  0
 
-  // 아래는 normalized value 
+  if (exp > bias + 30U)
+    return 0x80000000u; // 2^31 >> overflow 발생
+
+  // 아래는 normalized value
   // significand는 기본이 1 포함 >> 1 하나 설치 (소수 기준)
   significand = significand | (1U << 23);
-  if(exp > bias + 23U) result = significand <<= (exp - bias - 23U);
-  else result = significand >>= (bias + 23U - exp);
+  if (exp > bias + 23U)
+    result = significand <<= (exp - bias - 23U);
+  else
+    result = significand >>= (bias + 23U - exp);
 
-  if(sign) result = ~result + 1;
-
+  if (sign)
+    result = ~result + 1;
 
   return result;
 }
-/* 
+/*
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
  *   (2.0 raised to the power x) for any 32-bit integer x.
  *
@@ -437,24 +455,27 @@ int floatFloat2Int(unsigned uf) {
  *   representation as the single-precision floating-point number 2.0^x.
  *   If the result is too small to be represented as a denorm, return
  *   0. If too large, return +INF.
- * 
- *   Legal ops: Any integer/unsigned operations incl. ||, &&. Also if, while 
- *   Max ops: 30 
+ *
+ *   Legal ops: Any integer/unsigned operations incl. ||, &&. Also if, while
+ *   Max ops: 30
  *   Rating: 4
- *   
+ *
  */
-unsigned floatPower2(int x) {
+unsigned floatPower2(int x)
+{
   unsigned signifcand = 0; // 23
   int bias = 127;
   unsigned result = 0;
   unsigned exp;
-  if(x < 0) return 0;
-  if(x >= (255 - bias)) return 0x7f800000U; // x + bias가 255(11111111) 되면 return
+  if (x < 0)
+    return 0;
+  if (x >= (255 - bias))
+    return 0x7f800000U; // x + bias가 255(11111111) 되면 return
 
   x += bias;
 
   exp = (x << 23) & 0x7f800000U;
-  
+
   result = exp | signifcand;
 
   return result;
