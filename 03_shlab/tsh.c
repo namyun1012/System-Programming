@@ -171,6 +171,39 @@ int main(int argc, char **argv)
  */
 void eval(char *cmdline)
 {
+  int bg;
+  char *argv[MAXARGS];
+  pid_t pid;
+  sigset_t mask;
+
+  bg = parseline(cmdline, argv);
+  
+  if(argv[0] == NULL) return ;
+
+  if(!builtin_cmd(argv)) {  // not bulltlin
+  
+    pid = fork();
+    
+    if(pid == 0) {
+      if(execve(argv[0], argv, environ) < 0) {
+        printf("Fork Error\n");
+        exit(0);
+      }
+    }
+    
+    int status = bg ? BG : FG;
+
+    addjob(jobs, pid, status, cmdline);
+
+    if(!bg) { // fg
+      waitpid(pid, NULL, 0);
+      deletejob(jobs, pid);
+    }
+
+    else { //bg
+      printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
+    }
+  }
   return;
 }
 
@@ -237,6 +270,14 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv)
 {
+  //strcmp는 같을 때 0
+  if(!strcmp(argv[0], "quit")) exit(0);
+
+  else if(!strcmp(argv[0], "jobs")) {
+    listjobs(jobs);
+    return 1;
+  }
+
   return 0;     /* not a builtin command */
 }
 
@@ -269,7 +310,7 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
-  return;
+  
 }
 
 /*
