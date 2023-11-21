@@ -181,7 +181,6 @@ void eval(char *cmdline)
   if(argv[0] == NULL) return ;
 
   if(!builtin_cmd(argv)) {  // not bulltlin
-  
     pid = fork();
     
     if(pid == 0) {
@@ -320,6 +319,10 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
+
+  pid_t pid = fgpid(jobs);
+  if(pid > 0) kill(-pid, SIGINT);
+  printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, SIGINT);
   return;
 }
 
