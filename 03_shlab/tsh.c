@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
@@ -13,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
+
 
 /* Misc manifest constants */
 #define MAXLINE    1024   /* max line size */
@@ -170,22 +172,31 @@ int main(int argc, char **argv)
  * when we type ctrl-c (ctrl-z) at the keyboard.
  */
 void eval(char *cmdline)
-{
+{ 
   int bg;
   char *argv[MAXARGS];
   pid_t pid;
-  sigset_t mask;
-
-  bg = parseline(cmdline, argv);
   
+  
+  bg = parseline(cmdline, argv);
   if(argv[0] == NULL) return ;
 
+  
+  
   if(!builtin_cmd(argv)) {  // not bulltlin
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &mask, NULL);
+    
     pid = fork();
     
-    if(pid == 0) {
+    if(pid == 0) { // child 
+      setpgid(0,0);
+      sigprocmask(SIG_UNBLOCK, &mask, NULL);
+      
       if(execve(argv[0], argv, environ) < 0) {
-        printf("Fork Error\n");
+        printf("command not found\n");
         exit(0);
       }
     }
@@ -193,17 +204,16 @@ void eval(char *cmdline)
     int status = bg ? BG : FG;
 
     addjob(jobs, pid, status, cmdline);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     if(!bg) { // fg
-      waitpid(pid, NULL, 0);
-      deletejob(jobs, pid);
+      waitfg(pid);
     }
 
     else { //bg
       printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
     }
   }
-  return;
 }
 
 /*
@@ -277,6 +287,16 @@ int builtin_cmd(char **argv)
     return 1;
   }
 
+  else if(!strcmp(argv[0], "fg")) {
+    do_bgfg(argv);
+    return 1;
+  }
+
+  else if(!strcmp(argv[0], "bg")) {
+    do_bgfg(argv);
+    return 1;
+  }
+
   return 0;     /* not a builtin command */
 }
 
@@ -285,7 +305,57 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
-  return;
+  
+  if(!argv[1]) {
+    printf("%s command requires PID or %%jobid argument\n", argv[0]);
+    return;
+  }
+
+  pid_t pid;
+  struct job_t *job;
+
+  
+  char* c = strstr(argv[1], "%");
+
+  if(c) {
+    pid_t jid = atoi(c + 1);
+    job = getjobjid(jobs, jid);
+
+    if(job == NULL) {
+      printf("%d: No such job\n", jid);
+      return;
+    }
+
+    pid = job->pid;
+  } 
+  
+  else if(isdigit(argv[1][0])) {
+    pid = atoi(argv[1]);
+    job = getjobpid(jobs, pid);
+
+    if(job == NULL) {
+      printf("(%d): No such process\n", pid);
+      return ;
+    }
+  } 
+  
+  else {
+    printf("%s: argument must be a PID or %%jobid\n", argv[0]);
+    return ;
+  }
+
+  kill(-pid, SIGCONT);
+
+  if(!strcmp(argv[0], "bg")) { // BG
+    job->state = BG;
+    printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
+  } 
+  //FG
+  else if(!strcmp(argv[0], "fg")){
+    job->state = FG;
+    waitfg(pid);
+  }
+
 }
 
 /*
@@ -293,7 +363,13 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-  return;
+
+  struct job_t *job = getjobpid(jobs, pid);
+  if(job == NULL) return ;
+  
+  while(job->state == FG) {
+    sleep(1);
+  }
 }
 
 /*****************
@@ -309,6 +385,28 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
+  pid_t pid;
+  int status;
+
+  while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
+    struct job_t* job = getjobpid(jobs, pid);
+
+    if(WIFEXITED(status)) {
+
+      deletejob(jobs, pid);
+    } 
+    
+    else if(WIFSTOPPED(status)) {
+      printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, SIGTSTP);
+      job->state = ST;
+    } 
+    
+    else if(WIFSIGNALED(status)) {
+      printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, SIGINT);
+      deletejob(jobs, pid);
+    }
+  }
+
   
 }
 
@@ -321,8 +419,11 @@ void sigint_handler(int sig)
 {
 
   pid_t pid = fgpid(jobs);
-  if(pid > 0) kill(-pid, SIGINT);
-  printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, SIGINT);
+  
+  if(pid > 0) {
+    kill(-pid, SIGINT);
+    
+  }
   return;
 }
 
@@ -333,6 +434,13 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
+  pid_t pid = fgpid(jobs);
+  
+  if(pid > 0) {
+    
+    kill(-pid, SIGTSTP);    
+  }
+
   return;
 }
 
