@@ -184,6 +184,8 @@ void eval(char *cmdline)
   
   
   if(!builtin_cmd(argv)) {  // not bulltlin
+
+    //setting mask
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGCHLD);
@@ -282,11 +284,13 @@ int builtin_cmd(char **argv)
   //strcmp는 같을 때 0
   if(!strcmp(argv[0], "quit")) exit(0);
 
+  //listjobs 실행
   else if(!strcmp(argv[0], "jobs")) {
     listjobs(jobs);
     return 1;
   }
 
+  // fg or bg 실행
   else if(!strcmp(argv[0], "fg")) {
     do_bgfg(argv);
     return 1;
@@ -305,7 +309,7 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
-  
+  // argv[1]에 값이 없음 
   if(!argv[1]) {
     printf("%s command requires PID or %%jobid argument\n", argv[0]);
     return;
@@ -314,21 +318,25 @@ void do_bgfg(char **argv)
   pid_t pid;
   struct job_t *job;
 
-  
+  // fg나 bg에 %가 붙는지 확인하기
   char* c = strstr(argv[1], "%");
 
+  // % 안 붙음
   if(c) {
+    // c 다음 주소에 jid 존재함
     pid_t jid = atoi(c + 1);
     job = getjobjid(jobs, jid);
-
+    // job이 비었을 때
     if(job == NULL) {
-      printf("%d: No such job\n", jid);
+      printf("%%%d: No such job\n", jid);
       return;
     }
 
+    // pid 설정
     pid = job->pid;
   } 
   
+  // fg or bg에 % 안 붙음 대신 pid 존재함
   else if(isdigit(argv[1][0])) {
     pid = atoi(argv[1]);
     job = getjobpid(jobs, pid);
@@ -338,7 +346,7 @@ void do_bgfg(char **argv)
       return ;
     }
   } 
-  
+  // pid나 jid 둘다 아닐때
   else {
     printf("%s: argument must be a PID or %%jobid\n", argv[0]);
     return ;
@@ -365,10 +373,10 @@ void waitfg(pid_t pid)
 {
 
   struct job_t *job = getjobpid(jobs, pid);
-  if(job == NULL) return ;
-  
-  while(job->state == FG) {
-    sleep(1);
+  if(job != NULL) {
+    while(job->state == FG) {
+      sleep(1);
+    }
   }
 }
 
@@ -392,7 +400,6 @@ void sigchld_handler(int sig)
     struct job_t* job = getjobpid(jobs, pid);
 
     if(WIFEXITED(status)) {
-
       deletejob(jobs, pid);
     } 
     
@@ -421,8 +428,7 @@ void sigint_handler(int sig)
   pid_t pid = fgpid(jobs);
   
   if(pid > 0) {
-    kill(-pid, SIGINT);
-    
+    kill(-pid, SIGINT); // SIGINT
   }
   return;
 }
@@ -438,7 +444,7 @@ void sigtstp_handler(int sig)
   
   if(pid > 0) {
     
-    kill(-pid, SIGTSTP);    
+    kill(-pid, SIGTSTP);  //SIGTSTP
   }
 
   return;
