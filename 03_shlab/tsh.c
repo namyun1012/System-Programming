@@ -191,24 +191,27 @@ void eval(char *cmdline)
     sigaddset(&mask, SIGCHLD);
     sigprocmask(SIG_BLOCK, &mask, NULL);
     
+    // fork 진행함
     pid = fork();
     
     if(pid == 0) { // child 
       setpgid(0,0);
       sigprocmask(SIG_UNBLOCK, &mask, NULL);
       
+      // 만약에 이 if가 실행되면 command not found 실행
       if(execve(argv[0], argv, environ) < 0) {
         printf("command not found\n");
         exit(0);
       }
     }
     
+    // status 정하기
     int status = bg ? BG : FG;
 
     addjob(jobs, pid, status, cmdline);
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
-    if(!bg) { // fg
+    if(!bg) { // fg, 종료될 때까지 기다리기
       waitfg(pid);
     }
 
@@ -318,14 +321,12 @@ void do_bgfg(char **argv)
   pid_t pid;
   struct job_t *job;
 
-  // fg나 bg에 %가 붙는지 확인하기
-  char* c = strstr(argv[1], "%");
-
-  // % 안 붙음
-  if(c) {
+  // fg나 bg에 %가 붙는지 확인
+  // %  붙음
+  if(argv[1][0] == '%') {
     // c 다음 주소에 jid 존재함
-    pid_t jid = atoi(c + 1);
-    job = getjobjid(jobs, jid);
+    pid_t jid = atoi(&argv[1][1]);
+    job = getjobjid(jobs, jid); // job을 결정.
     // job이 비었을 때
     if(job == NULL) {
       printf("%%%d: No such job\n", jid);
@@ -341,6 +342,7 @@ void do_bgfg(char **argv)
     pid = atoi(argv[1]);
     job = getjobpid(jobs, pid);
 
+    // job이 없음
     if(job == NULL) {
       printf("(%d): No such process\n", pid);
       return ;
@@ -352,6 +354,7 @@ void do_bgfg(char **argv)
     return ;
   }
 
+  // continue after stop
   kill(-pid, SIGCONT);
 
   if(!strcmp(argv[0], "bg")) { // BG
