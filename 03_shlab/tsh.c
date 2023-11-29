@@ -185,7 +185,7 @@ void eval(char *cmdline)
   
   if(!builtin_cmd(argv)) {  // not bulltlin
 
-    //setting mask
+    //setting mask , SIGCHILD and blocking
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGCHLD);
@@ -194,9 +194,9 @@ void eval(char *cmdline)
     // fork 진행함
     pid = fork();
     
-    if(pid == 0) { // child 
-      setpgid(0,0);
-      sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    if(pid == 0) { // child 일 경우에만
+      setpgid(0,0); // pid, pgid 둘 다 0으로
+      sigprocmask(SIG_UNBLOCK, &mask, NULL); // UNBLOCKING
       
       // 만약에 이 if가 실행되면 command not found 실행
       if(execve(argv[0], argv, environ) < 0) {
@@ -322,9 +322,9 @@ void do_bgfg(char **argv)
   struct job_t *job;
 
   // fg나 bg에 %가 붙는지 확인
-  // %  붙음
+  // %  붙음 job
   if(argv[1][0] == '%') {
-    // c 다음 주소에 jid 존재함
+    // argv[1][0] 다음 주소에 jid 존재함
     pid_t jid = atoi(&argv[1][1]);
     job = getjobjid(jobs, jid); // job을 결정.
     // job이 비었을 때
@@ -337,7 +337,7 @@ void do_bgfg(char **argv)
     pid = job->pid;
   } 
   
-  // fg or bg에 % 안 붙음 대신 pid 존재함
+  // fg or bg에 % 안 붙음 대신 pid 존재함 process
   else if(isdigit(argv[1][0])) {
     pid = atoi(argv[1]);
     job = getjobpid(jobs, pid);
@@ -401,16 +401,18 @@ void sigchld_handler(int sig)
 
   while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
     struct job_t* job = getjobpid(jobs, pid);
-
+    // 일반적인 종료
     if(WIFEXITED(status)) {
       deletejob(jobs, pid);
     } 
     
+    // ctrl + z 멈출 때
     else if(WIFSTOPPED(status)) {
       printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, SIGTSTP);
       job->state = ST;
     } 
     
+    // ctrl + c 삭제
     else if(WIFSIGNALED(status)) {
       printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, SIGINT);
       deletejob(jobs, pid);
