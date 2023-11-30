@@ -1,8 +1,8 @@
 /*
  * tsh - A tiny shell program with job control
  *
- * Name: <fill in>
- * Student id: <fill in>
+ * Name: <김남윤>
+ * Student id: <2020030819>
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -371,6 +371,7 @@ void do_bgfg(char **argv)
 
 /*
  * waitfg - Block until process pid is no longer the foreground process
+    fg가 끝날 때까지 대기함
  */
 void waitfg(pid_t pid)
 {
